@@ -1,0 +1,42 @@
+ProcessProfiler, Tango Device Server
+
+  
+
+Developed by Sergi Rubio, ALBA Synchrotron
+
+The server will use fandango.linos module to monitorize some OS processes. For each process detailed in the ProcessList property (e.g. notifd) the device will generate several dynamic attributes: * notifd_pid: * notifd_mem: * notifd_cpu: The Update() command will force the update of this variables. This device server will be used to monitorize notifd issues in several control machines and trigger Alarms/Archiving if needed. 
+
+Static attributes:
+
+ LoadAverage #CPUUsage
+ MaxRss  #Maximum memory usage
+ MaxRssProcess  #Process using the most memory
+ 
+Dynamic attributes for each process in ProcessList:
+
+ *nprocesses
+ *nthreads
+ *pids
+ *cpu
+ *mem
+ *vmem
+ *memRatio
+ *kbpm #(memory increase per minute)
+
+
+To measure system usage the device server has several dependencies:
+
+ - fandango module must be in your PYTHONPATH:
+ 
+     svn co https://svn.code.sf.net/p/tango-cs/code/share/fandango/trunk/fandango
+     
+ - ProcessProfiler relies on common Linux commands/files, these must be valid in your distribution and the server must have permissions to access it:
+ 
+    ps syntax supported:   ps hax -o pid,nlwp,%cpu,%mem,rss,vsize,cmd
+    
+    proc files must exist:   /proc/pid/status 
+    
+    
+Enjoy,
+
+Sergi Rubio
