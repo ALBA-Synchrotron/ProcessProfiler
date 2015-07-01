@@ -1,0 +1,11 @@
+/**
+ * Device Class Identification:
+ * 
+ * Class Name   :	ProcessProfiler
+ * Contact      :	srubio@cells.es
+ * Class Family :	Process
+ * Platform     :	All Platforms
+ * Bus          :	Linux
+ * Manufacturer :	none
+ * Reference    :	
+ */

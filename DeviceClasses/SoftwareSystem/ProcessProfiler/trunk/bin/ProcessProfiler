@@ -1,0 +1,7 @@
+#!/bin/sh
+
+. alba_blissrc
+
+cd $SICILIA/ds/python/ProcessProfiler
+screen -dm -S ProcessProfiler-$1 python ProcessProfiler.py $1 $2
+
