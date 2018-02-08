@@ -39,6 +39,7 @@ import sys,os,traceback,re,time
 
 import fandango
 from fandango.linos import shell_command,get_process_pid,get_memory #,get_cpu,get_memory
+from fandango.log import tracer
 
 if 'PyDeviceClass' not in dir(PyTango): PyTango.PyDeviceClass = PyTango.DeviceClass
 
@@ -115,7 +116,11 @@ def memory_checker(f):
         
 @memory_checker
 def get_all_process(regexp=''):
+    """
+    Returns a {int(PID):stats} dictionary
+    """
     import re
+    tracer('get_all_process(%s)'%regexp)
     pss = {}
     try:
         comm = "ps hax -o pid,nlwp,%cpu,%mem,rss,vsize,cmd"#hax is needed to show Starter process
@@ -123,7 +128,8 @@ def get_all_process(regexp=''):
         for r in map(str.split,lines):
             if not r: continue
             r = dict((k,v if k=='cmd' else (float(v) if '.' in v else int(v))) for k,v in zip(('pid','threads','cpu','mem','rss','vsize','cmd'),(r[0:6])+[' '.join(r[6:])]))
-            r['rss'],r['vsize'] = 1e-3*r['rss'],1e-3*r['vsize'] #Memory read in MB
+            #r['rss'],r['vsize'] = 1e-3*r['rss'],1e-3*r['vsize'] #Memory read in MB
+            r['rss'],r['vsize'] = r['rss'],r['vsize'] #Memory read in KBytes
             if r['pid'] and not regexp or re.search(regexp,r.get('cmd','')):
                 pss[int(r['pid'])] = r
     except:
@@ -136,8 +142,11 @@ def get_worse_process(processes=None,key='rss'):
     return sorted((v[key],v['pid']) for v in all_proc.values())[-1][-1]
     
 def getMemUsage(pid=None,virtual=False):    
-    import os
-    if pid is None: pid = os.getpid()
+    """
+    DEPRECATED, GET IT FROM self.all_proc
+    """
+    tracer('getMemUsage(%s)'%pid)
+    if pid is None: pid = self._PID
     tag = 'Vm%s'%('Size' if virtual else 'RSS')
     #mem,units = shell_command('cat /proc/%s/status | grep Vm%s'%(pid,'Size' if virtual else 'RSS')).lower().strip().split()[1:3]
     f = open('/proc/%s/status'%pid,'r')
@@ -193,6 +202,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
     @memory_checker
     def _read_dyn_attr(self,attr):
         aname = attr.get_name()
+        tracer('read_dyn_attr(%s)'%aname)
         value = self.values.get(aname,None)
         self.debug_stream('In read_dyn_attr(%s) = %s ; (mem = %s)'%(aname,value,get_memory()))
         if value == None:
@@ -281,6 +291,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
         self.failed = {}
         self.leaks = {} #For each process time,memory,leak/minute will be recorded every 600s.
         self._nCPUs = 1 #cpu_count()
+        self._PID = os.getpid()
         self.updateThread = None
         self.lapseTime = None
         print 'Ready to receive request ...\n\n'
@@ -348,6 +359,19 @@ class ProcessProfiler(PyTango.Device_4Impl):
         #    Add your own code here
         
         attr.set_value(self.lapseTime)
+        
+#------------------------------------------------------------------
+#    Read MemUsage attribute
+#------------------------------------------------------------------
+    def read_MemUsage(self, attr):
+        #self.debug_stream("In read_MemUsage()")
+        
+        #    Add your own code here
+        if self._PID in self.all_proc:
+            v = self.all_proc[self._PID]['rss']
+        else:
+            v = self.getMemUsage()
+        attr.set_value(v)
 
 #==================================================================
 #
@@ -363,7 +387,8 @@ class ProcessProfiler(PyTango.Device_4Impl):
 #------------------------------------------------------------------
     @memory_checker
     def Update(self):
-        self.info_stream("In %s::Update(%s)"%(self.get_name(),self.Threaded))
+        #self.info_stream
+        tracer("In %s::Update(%s)"%(self.get_name(),self.Threaded))
         #    Add your own code here
         try:
             if self.get_state() == PyTango.DevState.INIT:
@@ -392,6 +417,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
         
     def update_ProcessList(self):
         try:
+            self.debug_stream('update_ProcessList(%s)' % self.UseEvents)
             startTime = time.time()
             #self._loadAverage = [] #list(os.getloadavg())
             if self.UseEvents: self.fireEventsList([['LoadAverage',self._loadAverage]])
@@ -420,6 +446,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
             self.update_process(process)
             
     def update_all_processes(self):
+        #tracer('update_all_processes()')
         self.all_proc = get_all_process()
         p = get_worse_process(self.all_proc,'rss')
         self.maxrss = self.all_proc[p]['rss']
@@ -428,7 +455,8 @@ class ProcessProfiler(PyTango.Device_4Impl):
             self.update_process(process)
 
     def update_process(self,process):
-        #self.info_stream('Update(%s)'%process)
+        #self.info_stream
+        #tracer('update_process(%s)'%process)
         aname = re.sub('[^0-9a-zA-Z]+','_',process)
         processes = []
         nthreads,cpu,mem,vmem,memRatio = None,None,None,None,None
@@ -498,7 +526,20 @@ class ProcessProfiler(PyTango.Device_4Impl):
                 #subprocess_memRatio,
                 #subprocess_mem,
                 #subprocess_vmem]
+                
+#------------------------------------------------------------------
+#    evaluateFormula command:
+#------------------------------------------------------------------                
 
+    def evaluateFormula(self,argin):
+        t0 = time.time()
+        tracer('\tevaluateFormula(%s)'%(argin,))
+        try:
+            argout = eval(str(argin),{},locals())
+        except Exception,e:
+            argout = e
+        tracer('\tevaluateFormula took %s seconds'%(time.time()-t0))
+        return str(argout)
 
 #==================================================================
 #
@@ -537,6 +578,12 @@ class ProcessProfilerClass(PyTango.PyDeviceClass):
             {
                 'Polling period': 10000,
             } ],
+        'evaluateFormula':
+            [[PyTango.DevString, "formula to evaluate"],
+            [PyTango.DevString, "formula to evaluate"],
+            {
+                'Display level':PyTango.DispLevel.EXPERT,
+             } ],            
         }
 
 
@@ -546,7 +593,9 @@ class ProcessProfilerClass(PyTango.PyDeviceClass):
             [[PyTango.DevDouble,
             PyTango.SCALAR,
             PyTango.READ],
-            ],
+            {
+                'unit':'kb',
+            } ],            
         'MaxRssProcess':
             [[PyTango.DevString,
             PyTango.SCALAR,
@@ -576,6 +625,13 @@ class ProcessProfilerClass(PyTango.PyDeviceClass):
                 'label':'Update lapsetime',
                 'description':'Time used by the Update() command to proceed',
                 'unit':'s',
+            } ],
+       'MemUsage':
+           [[PyTango.DevDouble,
+           PyTango.SCALAR,
+           PyTango.READ],
+            {
+                'unit':'kb',
             } ],
         }
 
