@@ -39,7 +39,6 @@ import sys,os,traceback,re,time
 
 import fandango
 from fandango.linos import shell_command,get_process_pid,get_memory #,get_cpu,get_memory
-from fandango.log import tracer
 
 if 'PyDeviceClass' not in dir(PyTango): PyTango.PyDeviceClass = PyTango.DeviceClass
 
@@ -102,6 +101,9 @@ __doc__ = """
         #return [int(p) for p in process_list.split('\n') if p.strip()]
     #except:
         #return []
+        
+def tracer(msg):
+    print('%s: %s'%(fandango.time2str,msg))
         
 def memory_checker(f):
     def wrapper(*args,**kwargs):
