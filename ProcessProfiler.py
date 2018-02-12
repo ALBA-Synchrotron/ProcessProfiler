@@ -120,7 +120,7 @@ def get_all_process(regexp=''):
     Returns a {int(PID):stats} dictionary
     """
     import re
-    tracer('get_all_process(%s)'%regexp)
+    #tracer('get_all_process(%s)'%regexp)
     pss = {}
     try:
         comm = "ps hax -o pid,nlwp,%cpu,%mem,rss,vsize,cmd"#hax is needed to show Starter process
@@ -158,10 +158,23 @@ def getMemUsage(pid=None,virtual=False):
     del lines
     return mem
 
-
 class ProcessProfiler(PyTango.Device_4Impl):
 
     #--------- Add you global variables here --------------------------
+    
+    def getMemRate(self):
+        try:
+            #print('getMemRate()')
+            meminfo = shell_command('cat /proc/meminfo').split('\n')
+            meminfo = dict(map(str.strip,a.split(':',1)) for a in meminfo if a.strip())
+            getter = lambda k: float(eval(meminfo[k].lower().replace('kb','*1').replace('mb','*1e3').replace('b','*1e-3')))
+            self._total, self._free, self._cached = getter('MemTotal'),getter('MemFree'),getter('Cached')
+            self._used = (self._total-(self._free+self._cached))
+            self._memrate = (self._used/self._total)
+        except:
+            traceback.print_exc()
+            self._memrate = 0.
+        return self._memrate
 
     def fireEventsList(self,eventsAttrList):
         #self.debug_stream("In %s::fireEventsList()"%self.get_name())
@@ -292,6 +305,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
         self.leaks = {} #For each process time,memory,leak/minute will be recorded every 600s.
         self._nCPUs = 1 #cpu_count()
         self._PID = os.getpid()
+        self._memrate = 0.
         self.updateThread = None
         self.lapseTime = None
         print 'Ready to receive request ...\n\n'
@@ -303,15 +317,28 @@ class ProcessProfiler(PyTango.Device_4Impl):
 #------------------------------------------------------------------
     @memory_checker
     def always_executed_hook(self):
-        #self.debug_stream("In ", self.get_name(), "::always_excuted_hook()")
-        default = 'Device is %s'%self.get_state()
-        if self.failed: 
-            msg = 'Process not found:]\n%s'%'\n'.join(sorted(str(t) for t in self.failed.items()))
-            self.set_status(msg)
-            print self.get_status()
-        elif self.get_status()!=default: 
-            self.set_status(default)
-            print self.get_status()
+        try:
+            #self.debug_stream("In ", self.get_name(), "::always_excuted_hook()")
+            default = 'Device is %s'%self.get_state()
+            if self.failed: 
+                msg = 'Process not found:]\n%s'%'\n'.join(sorted(str(t) for t in self.failed.items()))
+                self.set_status(msg)
+                print(self.get_status())
+            else:
+                status = default
+                status += '\nTotal: %s, Used: %s' % (self._total,self._used)
+                status += '\nFree: %s, Cached: %s' % (self._free,self._cached)
+                status += '\nLoad: %s' % str(self._loadAverage)
+                status += '\nMaxRss: PID %s (%s kb)\n%s' % (
+                    self.maxrsspid, self.maxrss, self.maxrssname)
+                self.set_status(status)
+            #elif self.get_status()!=default: 
+                #self.set_status(default)
+                #print self.get_status()
+        except:
+            self.set_status(traceback.format_exc())
+            self.set_state(PyTango.DevState.UNKNOWN)
+            print(self.get_status())
 
 #==================================================================
 #
@@ -372,6 +399,12 @@ class ProcessProfiler(PyTango.Device_4Impl):
         else:
             v = self.getMemUsage()
         attr.set_value(v)
+        
+    def read_MemRate(self, attr):
+        #self.debug_stream("In read_MemUsage()")
+        
+        #    Add your own code here
+        attr.set_value(self._memrate)
 
 #==================================================================
 #
@@ -423,6 +456,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
             if self.UseEvents: self.fireEventsList([['LoadAverage',self._loadAverage]])
             #self._update_without_thread_split()#self._update_without_thread_split()
             self.update_all_processes()
+            self.getMemRate()
             self.lapseTime = time.time()-startTime
             #self.info_stream('Update() finished in %6.3f seconds'%(self.lapseTime))
             if self.UseEvents: self.fireEventsList([['UpdateLapseTime',self.lapseTime]])
@@ -450,6 +484,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
         self.all_proc = get_all_process()
         p = get_worse_process(self.all_proc,'rss')
         self.maxrss = self.all_proc[p]['rss']
+        self.maxrsspid = p
         self.maxrssname = self.all_proc[p]['cmd']
         for process in self.ProcessList:
             self.update_process(process)
@@ -535,7 +570,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
         t0 = time.time()
         tracer('\tevaluateFormula(%s)'%(argin,))
         try:
-            argout = eval(str(argin),{},locals())
+            argout = eval(str(argin),globals(),locals())
         except Exception,e:
             argout = e
         tracer('\tevaluateFormula took %s seconds'%(time.time()-t0))
@@ -631,8 +666,17 @@ class ProcessProfilerClass(PyTango.PyDeviceClass):
            PyTango.SCALAR,
            PyTango.READ],
             {
+                'description': 'This attribute returns the memory of OWN process',
                 'unit':'kb',
             } ],
+       'MemRate':
+           [[PyTango.DevDouble,
+           PyTango.SCALAR,
+           PyTango.READ],
+            {
+                'description': 'This attribute returns total-(free+cached) memory',
+                'unit':' ',
+            } ],            
         }
 
     #Needed to have proper dynamic attributes
