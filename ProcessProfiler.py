@@ -103,7 +103,7 @@ __doc__ = """
         #return []
         
 def tracer(msg):
-    print('%s: %s'%(fandango.time2str,msg))
+    print('%s: %s'%(fandango.time2str(),msg))
         
 def memory_checker(f):
     def wrapper(*args,**kwargs):
