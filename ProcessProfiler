@@ -2,6 +2,7 @@
 
 . alba_blissrc
 
-cd $SICILIA/ds/python/ProcessProfiler
+cd /usr/share/tangods-processprofiler/ProcessProfiler/
+script /dev/null
 screen -dm -S ProcessProfiler-$1 python ProcessProfiler.py $1 $2
 

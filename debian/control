@@ -7,7 +7,7 @@ Standards-Version: 3.9.8
 
 Package: tangods-processprofiler
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-tango, python-fandango
+Depends: ${misc:Depends}, ${python:Depends}, python-tango, python-fandango, screen
 Description: Tango device for attributes aggregation
  Tango device to aggregate states/attributes from multiple
  devices, based on fandango dynamicds. It is implemented in 
