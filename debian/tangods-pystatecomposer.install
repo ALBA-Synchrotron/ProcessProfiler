@@ -1,0 +1,2 @@
+#!/usr/bin/dh-exec
+debian/tangods-pystatecomposer/usr/bin/PyStateComposer => /usr/share/tangods-pystatecomposer/PyStateComposer_

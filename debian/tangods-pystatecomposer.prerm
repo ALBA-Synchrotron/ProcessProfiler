@@ -1,0 +1,9 @@
+#!/bin/sh -e
+
+if [ "$1" = "remove" ]; then
+	find /usr/share/tangods-pystatecomposer -iname "*.pyc"  -exec rm {} \;
+fi
+
+#DEBHELPER#
+exit 0
+
