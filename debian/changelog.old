@@ -1,6 +1,6 @@
-pystatecomposer (7.1-0~bpo9+0~alba+5) stretch-backports; urgency=medium
+processprofiler (7.1-0~bpo9+0~alba+5) stretch-backports; urgency=medium
 
   * local package
   * source package automatically created by stdeb 0.8.5
 
- -- jandreu <jandreu@cells.es>  Wed, 14 Mar 2018 16:46:22 +0000
+ -- srubio <srubio@cells.es>  Wed, 14 Mar 2018 16:46:22 +0000

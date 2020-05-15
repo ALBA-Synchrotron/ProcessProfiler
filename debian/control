@@ -1,11 +1,11 @@
-Source: pystatecomposer
+Source: processprofiler
 Maintainer: srubio <srubio@cells.es>
 Section: python
 Priority: optional
 Build-Depends: dh-python, python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 9), dh-exec
 Standards-Version: 3.9.8
 
-Package: tangods-pystatecomposer
+Package: tangods-processprofiler
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-tango, python-fandango
 Description: Tango device for attributes aggregation

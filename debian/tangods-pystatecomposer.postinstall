@@ -1,5 +1,5 @@
 #!/bin/sh -e
-python -m compileall /usr/share/tangods-pystatecomposer/pystatecomposer
+python -m compileall /usr/share/tangods-processprofiler/processprofiler
 
 #DEBHELPER#
 exit 0

@@ -1,2 +1,2 @@
 #!/usr/bin/dh-exec
-debian/tangods-pystatecomposer/usr/bin/PyStateComposer => /usr/share/tangods-pystatecomposer/PyStateComposer_
+debian/tangods-processprofiler/usr/bin/ProcessProfiler => /usr/share/tangods-processprofiler/ProcessProfiler_

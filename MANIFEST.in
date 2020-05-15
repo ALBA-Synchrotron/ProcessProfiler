@@ -1,0 +1,3 @@
+global-exclude *.pyc
+include CHANGES LICENSE VERSION
+include-recursive doc

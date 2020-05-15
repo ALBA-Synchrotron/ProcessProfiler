@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Sergi Rubio
 Upstream-Contact: srubio@cells.es
-Source: https://github.com/ALBA-Synchrotron/PyStateComposer
+Source: https://github.com/ALBA-Synchrotron/ProcessProfiler
 
 Files: * 
 Copyright: Â2017, CELLS / ALBA Synchrotron, Bellaterra, Spain <controls-software@cells.es>

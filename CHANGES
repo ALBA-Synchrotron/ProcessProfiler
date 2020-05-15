@@ -1,0 +1,6 @@
+2.3
+
+2018: Add MemRate and MemUsage attributes, clean up traces, set Mem/RSS units(kb), add stats to Status
+
+2015: Solved bug in LoadAverage attribute
+
