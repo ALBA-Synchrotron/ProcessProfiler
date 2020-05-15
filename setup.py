@@ -16,8 +16,6 @@ To install as local package:
 -------------------------------------------------------------------------------
 """
 
-print(__doc__)
-
 version = open('VERSION').read().strip()
 scripts = ['ProcessProfiler']
 license = 'GPL-3.0'
