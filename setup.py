@@ -26,7 +26,7 @@ package_dir = {
 packages = package_dir.keys()
 
 package_data = {
-    '': ['VERSION'],
+    '': [version],
 }
 
 packages = package_dir.keys()
