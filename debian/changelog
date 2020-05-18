@@ -1,4 +1,4 @@
-tangods-processprofiler (0.0.1) stretch-backports; urgency=medium
+processprofiler (0.0.1) stretch-backports; urgency=medium
 
   * local package
 
