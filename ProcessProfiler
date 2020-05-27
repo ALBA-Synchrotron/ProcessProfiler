@@ -1,8 +1,13 @@
 #!/bin/sh
 
-. alba_blissrc
-
-cd /usr/share/tangods-processprofiler/ProcessProfiler/
-script /dev/null
-screen -dm -S ProcessProfiler-$1 python ProcessProfiler.py $1 $2
+#. alba_blissrc
+DS=ProcessProfiler
+FOLDER=$(find /usr/share/ -maxdepth 1 -iname "tangods-$DS")
+FOLDER=$FOLDER/$DS/
+#script /dev/null
+# Or just run sudo -u bob script -q -c 'screen -dr myscreen' /dev/null
+#screen -dm -S PyStateComposer-$1 
+CMD="python $FOLDER/$DS.py $1 $2"
+echo $CMD
+$CMD
 
