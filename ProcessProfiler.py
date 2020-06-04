@@ -171,6 +171,7 @@ class ProcessProfiler(PyTango.Device_4Impl):
             meminfo = dict(map(str.strip,a.split(':',1)) for a in meminfo if a.strip())
             getter = lambda k: float(eval(meminfo[k].lower().replace('kb','*1').replace('mb','*1e3').replace('b','*1e-3')))
             self._total, self._free, self._cached = getter('MemTotal'),getter('MemFree'),getter('Cached')
+            self._cached += getter('Slab') + getter('Buffers')
             ## Shared Memory Reclaimable could be considered also as Cached, but it is not 100% sure if it will be always reusable or not
             # Therefore, I prefered to ignore it. This is why this method may return less free memory than top.
             self._used = (self._total-(self._free+self._cached))
